@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compensation Package Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for Oberlin Theme -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        /* Oberlin College Branding */
+        :root {
+            --oberlin-crimson: #A01F3D;
+            --oberlin-crimson-dark: #801931;
+            --oberlin-gold: #FDB813;
+            --oberlin-gray: #F0F0F0;
+        }
+        body {
+            font-family: 'Lato', sans-serif;
+        }
+        h1, h2 {
+            font-family: 'EB Garamond', serif;
+        }
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Custom Component Styling */
+        .oberlin-btn {
+            background-color: var(--oberlin-crimson);
+            color: white;
+        }
+        .oberlin-btn:hover {
+            background-color: var(--oberlin-crimson-dark);
+        }
+        .form-input:focus {
+            --tw-ring-color: var(--oberlin-crimson);
+            border-color: var(--oberlin-crimson);
+        }
+
+        /* Custom toggle switch styles */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: var(--oberlin-crimson);
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: var(--oberlin-crimson);
+        }
+        /* Custom slider styles */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 9999px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        input[type=range]:hover {
+            opacity: 1;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--oberlin-crimson);
+            cursor: pointer;
+            border-radius: 50%;
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--oberlin-crimson);
+            cursor: pointer;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen py-12">
+    <div class="w-full max-w-2xl mx-auto p-4 sm:p-6 md:p-8">
+        <div class="bg-white rounded-2xl card-shadow overflow-hidden">
+            <div class="p-8 bg-gray-50 border-b border-gray-200">
+                <h1 class="text-3xl sm:text-4xl font-bold text-center" style="color: var(--oberlin-crimson);">Compensation Package Estimator</h1>
+                <p class="text-center text-gray-500 mt-2">Estimate total compensation costs for positions at Oberlin College.</p>
+            </div>
+
+            <div class="p-8">
+                <!-- Input Form -->
+                <form id="compensation-form" class="space-y-6">
+                    <!-- General Inputs -->
+                    <div>
+                        <label for="position-title" class="block text-sm font-medium text-gray-700 mb-1">Position Title</label>
+                        <input type="text" id="position-title" class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 transition" placeholder="e.g., Executive Director">
+                    </div>
+
+                    <div>
+                        <label for="base-salary" class="block text-sm font-medium text-gray-700 mb-1">Base Salary ($)</label>
+                        <input type="number" id="base-salary" value="100000" class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 transition" placeholder="Enter base salary">
+                    </div>
+
+                    <!-- Benefits Toggle -->
+                    <div class="flex items-center justify-center space-x-4">
+                        <span class="text-sm font-medium text-gray-700">Simple Benefits %</span>
+                        <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                            <input type="checkbox" name="toggle" id="benefits-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                            <label for="benefits-toggle" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                        <span class="text-sm font-medium text-gray-700">Detailed Breakdown</span>
+                    </div>
+
+                    <!-- Simple Benefits Section -->
+                    <div id="simple-benefits-section">
+                        <label for="benefits-percentage" class="block text-sm font-medium text-gray-700 mb-1">Benefits Load (%)</label>
+                        <input type="number" id="benefits-percentage" value="35" class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 transition" placeholder="Enter benefits percentage">
+                    </div>
+
+                    <!-- Detailed Benefits Section -->
+                    <div id="detailed-benefits-section" class="hidden space-y-4 pt-4 border-t">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div>
+                                <label for="health-cost" class="block text-sm font-medium text-gray-700 mb-1">Health ($)</label>
+                                <input type="number" id="health-cost" value="12000" class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 transition" placeholder="Annual">
+                            </div>
+                            <div>
+                                <label for="vision-cost" class="block text-sm font-medium text-gray-700 mb-1">Vision ($)</label>
+                                <input type="number" id="vision-cost" value="1000" class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 transition" placeholder="Annual">
+                            </div>
+                            <div>
+                                <label for="dental-cost" class="block text-sm font-medium text-gray-700 mb-1">Dental ($)</label>
+                                <input type="number" id="dental-cost" value="2000" class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 transition" placeholder="Annual">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="tuition-per-child" class="block text-sm font-medium text-gray-700 mb-1">Tuition Remission (per child)</label>
+                                <input type="number" id="tuition-per-child" value="20000" class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 transition" placeholder="Cost per child">
+                            </div>
+                            <div>
+                                <label for="tuition-children-count" class="block text-sm font-medium text-gray-700 mb-1">Number of Children</label>
+                                <select id="tuition-children-count" class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 transition">
+                                    <option value="0" selected>0</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="retirement-contribution" class="block text-sm font-medium text-gray-700 mb-1">Retirement Contribution (<span id="retirement-percentage-display">5</span>%)</label>
+                            <input type="range" id="retirement-contribution" min="0" max="20" value="5" step="0.5">
+                        </div>
+                    </div>
+                    
+                    <!-- Taxes Section -->
+                    <div>
+                        <label for="state-tax-percentage" class="block text-sm font-medium text-gray-700 mb-1">Estimated Employer Payroll Tax (%)</label>
+                        <input type="number" id="state-tax-percentage" value="9.3" class="form-input w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 transition" placeholder="e.g., FICA, SUI">
+                         <p class="text-xs text-gray-500 mt-1">Note: This is a rough estimate for employer-side payroll taxes (like FICA, SUI), not employee income tax.</p>
+                    </div>
+                </form>
+
+                <!-- Results Display -->
+                <div id="results" class="mt-8 border-t border-gray-200">
+                    <div id="pdf-capture-area" class="pt-6">
+                        <h2 class="text-2xl sm:text-3xl font-bold text-center pb-4" style="color: var(--oberlin-crimson);">Estimated Total Cost</h2>
+                        <div class="p-6 rounded-xl text-center" style="background-color: var(--oberlin-crimson);">
+                             <p id="position-title-display" class="text-lg font-medium text-white mb-2"></p>
+                            <p id="total-cost" class="text-4xl sm:text-5xl font-bold" style="color: var(--oberlin-gold);">$0.00</p>
+                        </div>
+
+                        <div id="results-breakdown" class="mt-6 space-y-3">
+                           <!-- JS will populate this -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Export Button -->
+                <div class="mt-8 text-center">
+                    <button type="button" id="export-pdf-btn" class="oberlin-btn font-bold py-3 px-6 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition duration-300 ease-in-out" style="--tw-ring-color: var(--oberlin-gold);">
+                        Export as PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- PDF Generation Library ---
+        const { jsPDF } = window.jspdf;
+
+        // --- DOM Elements ---
+        const form = document.getElementById('compensation-form');
+        const positionTitleInput = document.getElementById('position-title');
+        const baseSalaryInput = document.getElementById('base-salary');
+        const stateTaxPercentageInput = document.getElementById('state-tax-percentage');
+        
+        const benefitsToggle = document.getElementById('benefits-toggle');
+        const simpleBenefitsSection = document.getElementById('simple-benefits-section');
+        const detailedBenefitsSection = document.getElementById('detailed-benefits-section');
+        
+        // Simple benefits
+        const benefitsPercentageInput = document.getElementById('benefits-percentage');
+        
+        // Detailed benefits
+        const healthCostInput = document.getElementById('health-cost');
+        const visionCostInput = document.getElementById('vision-cost');
+        const dentalCostInput = document.getElementById('dental-cost');
+        const tuitionPerChildInput = document.getElementById('tuition-per-child');
+        const tuitionChildrenCountSelect = document.getElementById('tuition-children-count');
+        const retirementContributionSlider = document.getElementById('retirement-contribution');
+        const retirementPercentageDisplay = document.getElementById('retirement-percentage-display');
+
+        // Results
+        const pdfCaptureArea = document.getElementById('pdf-capture-area');
+        const positionTitleDisplay = document.getElementById('position-title-display');
+        const totalCostDisplay = document.getElementById('total-cost');
+        const resultsBreakdownContainer = document.getElementById('results-breakdown');
+        
+        // Export Button
+        const exportPdfBtn = document.getElementById('export-pdf-btn');
+
+        // --- State ---
+        let isDetailedView = false;
+
+        // --- Utility Functions ---
+        const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+        const createBreakdownRow = (label, value) => `
+            <div class="p-4 rounded-lg flex justify-between items-center" style="background-color: var(--oberlin-gray);">
+                <p class="text-sm text-gray-700">${label}</p>
+                <p class="text-lg font-semibold" style="color: var(--oberlin-crimson-dark);">${formatCurrency(value)}</p>
+            </div>`;
+
+        // --- Core Calculation Logic ---
+        function calculateAndDisplay() {
+            const positionTitle = positionTitleInput.value.trim();
+            const baseSalary = parseFloat(baseSalaryInput.value) || 0;
+            const taxPercentage = parseFloat(stateTaxPercentageInput.value) || 0;
+            let benefitsCost = 0;
+            let breakdownHtml = '';
+
+            if (isDetailedView) {
+                const healthCost = parseFloat(healthCostInput.value) || 0;
+                const visionCost = parseFloat(visionCostInput.value) || 0;
+                const dentalCost = parseFloat(dentalCostInput.value) || 0;
+                const tuitionPerChild = parseFloat(tuitionPerChildInput.value) || 0;
+                const childrenCount = parseInt(tuitionChildrenCountSelect.value, 10);
+                const retirementPercentage = parseFloat(retirementContributionSlider.value);
+                const tuitionTotalCost = tuitionPerChild * childrenCount;
+                const retirementTotalCost = baseSalary * (retirementPercentage / 100);
+                benefitsCost = healthCost + visionCost + dentalCost + tuitionTotalCost + retirementTotalCost;
+                breakdownHtml += createBreakdownRow('Base Salary', baseSalary);
+                breakdownHtml += createBreakdownRow('Health', healthCost);
+                breakdownHtml += createBreakdownRow('Vision', visionCost);
+                breakdownHtml += createBreakdownRow('Dental', dentalCost);
+                breakdownHtml += createBreakdownRow(`Tuition (${childrenCount} ${childrenCount === 1 ? 'child' : 'children'})`, tuitionTotalCost);
+                breakdownHtml += createBreakdownRow(`Retirement (${retirementPercentage}%)`, retirementTotalCost);
+            } else {
+                const benefitsPercentage = parseFloat(benefitsPercentageInput.value) || 0;
+                benefitsCost = baseSalary * (benefitsPercentage / 100);
+                breakdownHtml += createBreakdownRow('Base Salary', baseSalary);
+                breakdownHtml += createBreakdownRow(`Benefits (${benefitsPercentage}%)`, benefitsCost);
+            }
+            const taxCost = baseSalary * (taxPercentage / 100);
+            const totalCost = baseSalary + benefitsCost + taxCost;
+            breakdownHtml += createBreakdownRow(`Est. Employer Tax (${taxPercentage}%)`, taxCost);
+            positionTitleDisplay.textContent = positionTitle || 'Position';
+            totalCostDisplay.textContent = formatCurrency(totalCost);
+            resultsBreakdownContainer.innerHTML = breakdownHtml;
+            retirementPercentageDisplay.textContent = retirementContributionSlider.value;
+        }
+
+        // --- PDF Export Logic ---
+        function exportToPDF() {
+            const positionTitle = positionTitleInput.value.trim() || 'Position';
+            const filename = `Compensation-Estimate-${positionTitle.replace(/\s+/g, '-')}.pdf`;
+            const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+            html2canvas(pdfCaptureArea, { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const canvasWidth = canvas.width;
+                const canvasHeight = canvas.height;
+                const canvasAspectRatio = canvasWidth / canvasHeight;
+                const margin = 15;
+                const imgWidth = pdfWidth - (margin * 2);
+                const imgHeight = imgWidth / canvasAspectRatio;
+                let yPos = margin;
+
+                // Add main title
+                pdf.setFont('Garamond', 'bold');
+                pdf.setFontSize(22);
+                pdf.setTextColor('#A01F3D');
+                pdf.text(`Compensation Estimate: ${positionTitle}`, margin, yPos);
+                yPos += 10;
+
+                // Add the results image
+                pdf.addImage(imgData, 'PNG', margin, yPos, imgWidth, imgHeight);
+                yPos += imgHeight + 15;
+
+                if (yPos > pdf.internal.pageSize.getHeight() - 60) {
+                    pdf.addPage();
+                    yPos = margin;
+                }
+
+                // Add assumptions section
+                pdf.setFont('Garamond', 'bold');
+                pdf.setFontSize(18);
+                pdf.setTextColor('#A01F3D');
+                pdf.text('Calculation Assumptions', margin, yPos);
+                yPos += 7;
+
+                pdf.setFont('Lato', 'normal');
+                pdf.setFontSize(10);
+                pdf.setTextColor(0,0,0);
+                const assumptions = [];
+                const baseSalary = parseFloat(baseSalaryInput.value) || 0;
+                const taxPercentage = parseFloat(stateTaxPercentageInput.value) || 0;
+                assumptions.push(`- Base Salary: ${formatCurrency(baseSalary)}`);
+
+                if (isDetailedView) {
+                    const healthCost = parseFloat(healthCostInput.value) || 0;
+                    const visionCost = parseFloat(visionCostInput.value) || 0;
+                    const dentalCost = parseFloat(dentalCostInput.value) || 0;
+                    const tuitionPerChild = parseFloat(tuitionPerChildInput.value) || 0;
+                    const childrenCount = parseInt(tuitionChildrenCountSelect.value, 10);
+                    const retirementPercentage = parseFloat(retirementContributionSlider.value);
+                    assumptions.push('- Benefits Calculation Method: Detailed Breakdown');
+                    assumptions.push(`  - Health Cost: ${formatCurrency(healthCost)} (Annual)`);
+                    assumptions.push(`  - Vision Cost: ${formatCurrency(visionCost)} (Annual)`);
+                    assumptions.push(`  - Dental Cost: ${formatCurrency(dentalCost)} (Annual)`);
+                    assumptions.push(`  - Tuition Remission: ${formatCurrency(tuitionPerChild)} x ${childrenCount} children`);
+                    assumptions.push(`  - Retirement Contribution: ${retirementPercentage}% of Base Salary`);
+                } else {
+                    const benefitsPercentage = parseFloat(benefitsPercentageInput.value) || 0;
+                    assumptions.push('- Benefits Calculation Method: Simple Percentage');
+                    assumptions.push(`  - Benefits Load: ${benefitsPercentage}% of Base Salary`);
+                }
+                assumptions.push(`- Estimated Employer Payroll Tax: ${taxPercentage}% of Base Salary`);
+                pdf.text(assumptions, margin, yPos);
+                yPos += assumptions.length * 5 + 10;
+                
+                if (yPos > pdf.internal.pageSize.getHeight() - 20) {
+                    pdf.addPage();
+                    yPos = margin;
+                }
+                pdf.setFontSize(8);
+                pdf.setTextColor(150);
+                pdf.text('This document is an estimate for planning purposes only and does not constitute a formal offer of employment.', margin, yPos);
+
+                pdf.save(filename);
+            });
+        }
+
+        // --- Event Listeners ---
+        form.addEventListener('input', calculateAndDisplay);
+        benefitsToggle.addEventListener('change', (e) => {
+            isDetailedView = e.target.checked;
+            simpleBenefitsSection.classList.toggle('hidden');
+            detailedBenefitsSection.classList.toggle('hidden');
+            calculateAndDisplay();
+        });
+        exportPdfBtn.addEventListener('click', exportToPDF);
+        
+        // --- Initial Calculation ---
+        document.addEventListener('DOMContentLoaded', calculateAndDisplay);
+    </script>
+</body>
+</html>
